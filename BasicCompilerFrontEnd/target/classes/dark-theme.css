@@ -26,13 +26,11 @@
     -fx-border-color: transparent;
 }
 
-/* This is the magic for gradient borders using a background image */
 .button {
-    -fx-background-color: #3c3f41, linear-gradient(to bottom right, #4a9eff, #b347ff);
+    -fx-background-color: #3c3f41, linear-gradient(to bottom right, #4b8ffe, #2c5d99);
     -fx-background-insets: 0, 2;
     -fx-background-radius: 5px, 3px;
 }
-
 /* TextArea styles */
 .text-area {
     -fx-background-color: #3c3f41;
@@ -83,4 +81,40 @@
 .scroll-bar:vertical .thumb {
     -fx-background-color: #555555;
     -fx-background-radius: 5px;
+}
+/* Premium title that matches your blue-steel button gradient */
+.app-title {
+    -fx-font-size: 36px;
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-weight: 700;
+    -fx-text-fill: linear-gradient(to right, #6ba8ff, #4b8ffe 40%, #2c5d99);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 8, 0.4, 0, 3);
+    -fx-padding: 20 0 30 0;
+}
+/* Make the "Result:" title beautiful and consistent with your blue-steel theme */
+.titled-pane > .title {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #e0e0e0;
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-padding: 12px 16px;
+    -fx-border-width: 0 0 3px 0;
+}
+
+.titled-pane > .title > .arrow-button .arrow {
+    -fx-background-color: #888888;
+}
+
+.titled-pane > .title:hover {
+    -fx-background-color: #323537;
+}
+
+/* Optional: subtle glow on the "Result:" text to make it pop */
+.titled-pane > .title .text {
+    -fx-fill: #ffffff;
+    -fx-effect: dropshadow(gaussian, #4b8ffe, 4, 0.4, 0, 1);
+}
+.result-pane > .title > .arrow-button .arrow {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
 }

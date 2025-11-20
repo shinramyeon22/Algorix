@@ -11,29 +11,42 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.scene.control.Label;
 
 public class CompilerGUI extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // Create the main layout
+        // Main layout
         BorderPane root = new BorderPane();
 
-        // Left panel with buttons
+        Label title = new Label("Algorix Mini Java Compiler");
+        title.getStyleClass().add("app-title");        // This applies the CSS above
+        title.setMaxWidth(Double.MAX_VALUE);
+        title.setAlignment(Pos.CENTER);
+        root.setTop(title);
+
+        // Optional: add a subtle bottom border or glow (looks premium)
+        title.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-fill: #e0e0e0; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 10, 0.3, 0, 3);");
+
+        root.setTop(title);
+
+        // Left panel (buttons)
         VBox leftPanel = createLeftPanel();
         root.setLeft(leftPanel);
 
-        // Right panel with text areas
+        // Right panel (text areas)
         VBox rightPanel = createRightPanel();
         root.setCenter(rightPanel);
 
-        // Create the scene
-        Scene scene = new Scene(root, 800, 600);
+        // Scene & CSS
+        Scene scene = new Scene(root, 1100, 720);  // a bit larger looks better with title
+        scene.getStylesheets().add(
+                getClass().getResource("/dark-theme.css").toExternalForm()
+        );
 
-        // Load the CSS stylesheet
-        scene.getStylesheets().add(getClass().getResource("/dark-theme.css").toExternalForm());
-
-        primaryStage.setTitle("Compiler GUI");
+        primaryStage.setTitle("Algorix Mini Java Compiler");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -71,6 +84,7 @@ public class CompilerGUI extends Application {
         TitledPane resultPane = new TitledPane();
         resultPane.setText("Result:");
         resultPane.setCollapsible(false);
+        resultPane.getStyleClass().add("result-pane");   // ← add this line
 
         TextArea resultTextArea = new TextArea();
         resultTextArea.setEditable(false);
