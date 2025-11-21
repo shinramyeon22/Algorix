@@ -1,0 +1,6 @@
+Model\SemanticAnalysis.class
+Controller\FileChooser.class
+Model\SyntaxAnalysis.class
+module-info.class
+com\compiler\frontend\CompilerGUI.class
+Model\LexicalAnalysis.class
