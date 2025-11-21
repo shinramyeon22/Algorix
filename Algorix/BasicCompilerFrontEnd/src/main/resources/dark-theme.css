@@ -1,0 +1,86 @@
+/* Root styles for dark mode */
+.root {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #e0e0e0;
+}
+
+/* Button styles with gradient borders */
+.button {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #bbbbbb;
+    -fx-border-color: transparent;
+    -fx-border-width: 2px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-padding: 8px 16px;
+    -fx-font-size: 14px;
+}
+
+.button:hover {
+    -fx-background-color: #4c5052;
+    -fx-border-color: transparent;
+}
+
+.button:pressed {
+    -fx-background-color: #36393b;
+    -fx-border-color: transparent;
+}
+
+/* This is the magic for gradient borders using a background image */
+.button {
+    -fx-background-color: #3c3f41, linear-gradient(to bottom right, #4a9eff, #b347ff);
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 5px, 3px;
+}
+
+/* TextArea styles */
+.text-area {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #e0e0e0;
+    -fx-border-color: #555555;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+}
+
+.text-area .content {
+    -fx-background-color: #3c3f41;
+}
+
+/* TitledPane styles for the "Result:" section */
+.titled-pane {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #e0e0e0;
+}
+
+.titled-pane .title {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #e0e0e0;
+    -fx-border-color: #555555;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.titled-pane .content {
+    -fx-background-color: #3c3f41;
+    -fx-border-color: #555555;
+    -fx-border-radius: 0 0 5px 5px;
+}
+
+/* ScrollPane styles (used by TextArea) */
+.scroll-pane {
+    -fx-background-color: #3c3f41;
+    -fx-border-color: #555555;
+}
+
+.scroll-bar:vertical {
+    -fx-background-color: #3c3f41;
+}
+
+.scroll-bar:vertical .track {
+    -fx-background-color: #3c3f41;
+    -fx-border-color: #555555;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #555555;
+    -fx-background-radius: 5px;
+}
