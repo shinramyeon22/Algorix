@@ -18,9 +18,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class CompilerGUI extends Application {
-    
-    private TextArea mainTextArea;
+public class CompilerGUI extends Application {    private TextArea mainTextArea;
     private TextArea resultTextArea;
 
     @Override
@@ -32,12 +30,8 @@ public class CompilerGUI extends Application {
         title.getStyleClass().add("app-title");        // This applies the CSS above
         title.setMaxWidth(Double.MAX_VALUE);
         title.setAlignment(Pos.CENTER);
-        root.setTop(title);
 
-        // Optional: add a subtle bottom border or glow (looks premium)
-        title.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-fill: #e0e0e0; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 10, 0.3, 0, 3);");
-
+        // FIX 1: Removed inline setStyle call.
         root.setTop(title);
 
         // Left panel (buttons)
@@ -63,16 +57,20 @@ public class CompilerGUI extends Application {
         VBox leftPanel = new VBox(10);
         leftPanel.setPadding(new Insets(10));
         leftPanel.setAlignment(Pos.CENTER);
+        // FIX: Add left-panel class to VBox here for background/padding (if desired)
+        // leftPanel.getStyleClass().add("left-panel"); // (Recommended, but keeping previous functionality for now)
 
         // Create buttons
-        Button openFileBtn = new Button("Open File"); 
+        Button openFileBtn = new Button("Open File");
+        openFileBtn.getStyleClass().add("primary-action"); // Ensure primary action button is prominent
         Button lexicalBtn = new Button("Lexical Analysis");
-        lexicalBtn.setDisable(true); // disabled initially
         Button syntaxBtn = new Button("Syntax Analysis");
-        syntaxBtn.setDisable(true); // disabled initially
         Button semanticBtn = new Button("Semantic Analysis");
-        semanticBtn.setDisable(true); // disabled initially
         Button clearBtn = new Button("Clear");
+
+        lexicalBtn.setDisable(true); // disabled initially
+        syntaxBtn.setDisable(true); // disabled initially
+        semanticBtn.setDisable(true); // disabled initially
 
         clearBtn.setOnAction(event -> { // Clears the source code and result areas
             mainTextArea.clear();
@@ -86,7 +84,7 @@ public class CompilerGUI extends Application {
         openFileBtn.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
             String fileContent = fileChooser.openFile();
-            
+
             if (fileContent != null && !fileContent.isEmpty()) {
                 mainTextArea.setText(fileContent);
                 lexicalBtn.setDisable(false); // Enable Lexical Analysis
@@ -95,7 +93,7 @@ public class CompilerGUI extends Application {
                 resultTextArea.clear();
             }
         });
-        
+
         // Lexical Analysis button - enables Syntax Analysis only on PASS
         lexicalBtn.setOnAction(event -> {
             String sourceCode = mainTextArea.getText();
@@ -106,11 +104,11 @@ public class CompilerGUI extends Application {
                 LexicalAnalysis lexical = new LexicalAnalysis();
                 String result = lexical.analyze(sourceCode);
                 resultTextArea.setText(result);
-                
+
                 // Only enable Syntax Analysis if Lexical Analysis PASSED
                 if (lexical.isPassed()) {
-                   syntaxBtn.setDisable(false); // Enable Syntax Analysis
-                   lexicalBtn.setDisable(true); // Disable Lexical Analysis after pass
+                    syntaxBtn.setDisable(false); // Enable Syntax Analysis
+                    lexicalBtn.setDisable(true); // Disable Lexical Analysis after pass
                 } else {
                     syntaxBtn.setDisable(true); // Keep Syntax disabled
                 }
@@ -127,11 +125,11 @@ public class CompilerGUI extends Application {
                 SyntaxAnalysis syntax = new SyntaxAnalysis();
                 String result = syntax.analyze(sourceCode);
                 resultTextArea.setText(result);
-                
+
                 // Only enable Semantic Analysis if Syntax Analysis PASSED
                 if (syntax.isPassed()) {
-                 semanticBtn.setDisable(false); // Enable Semantic Analysis
-                 syntaxBtn.setDisable(true); // Disable Syntax Analysis after pass
+                    semanticBtn.setDisable(false); // Enable Semantic Analysis
+                    syntaxBtn.setDisable(true); // Disable Syntax Analysis after pass
                 } else {
                     semanticBtn.setDisable(true); // Keep Semantic disabled
                 }
@@ -154,7 +152,7 @@ public class CompilerGUI extends Application {
                 // If it fails, button remains enabled for retry
             }
         });
-        
+
 
         // Make buttons grow to fill the width
         openFileBtn.setMaxWidth(Double.MAX_VALUE);
@@ -175,27 +173,30 @@ public class CompilerGUI extends Application {
 
         // First text box using a TitledPane
         TitledPane resultPane = new TitledPane();
-        resultPane.setText("Result:");
+        resultPane.setText("Compiler Output"); // Changed to the more professional title
         resultPane.setCollapsible(false);
-        resultPane.getStyleClass().add("result-pane");   // ← add this line
+        resultPane.getStyleClass().add("result-pane");
 
         resultTextArea = new TextArea();
         resultTextArea.setEditable(false);
         resultTextArea.setWrapText(true);
+        // FIX 2: Add CSS class to resultTextArea for targetting
+        resultTextArea.getStyleClass().add("compiler-result-area");
         resultPane.setContent(resultTextArea);
 
         // Second text area with line numbers
         mainTextArea = new TextArea();
         mainTextArea.setWrapText(true);
-        mainTextArea.setStyle("-fx-control-inner-background: #1e1e1e; -fx-font-family: 'Courier New'; -fx-font-size: 12;");
-        
+        // FIX 3: REMOVED INLINE STYLE.
+
         // Create line number area
         TextArea lineNumbers = new TextArea();
         lineNumbers.setEditable(false);
         lineNumbers.setWrapText(false);
-        lineNumbers.setPrefWidth(50);
-        lineNumbers.setStyle("-fx-control-inner-background: #252526; -fx-font-family: 'Courier New'; -fx-font-size: 12; -fx-text-fill: #858585;");
-        
+        lineNumbers.setPrefWidth(55); // Slightly wider
+        lineNumbers.getStyleClass().add("line-numbers"); // Add CSS class
+        // FIX 4: REMOVED INLINE STYLE.
+
         // Sync line numbers with main text area
         mainTextArea.textProperty().addListener((obs, oldVal, newVal) -> {
             int lines = newVal.split("\n", -1).length;
@@ -205,14 +206,14 @@ public class CompilerGUI extends Application {
             }
             lineNumbers.setText(lineNumbersText.toString());
         });
-        
+
         // Sync scrolling between text areas
         mainTextArea.setScrollTop(0);
         lineNumbers.setScrollTop(0);
         mainTextArea.scrollTopProperty().addListener((obs, oldVal, newVal) -> {
             lineNumbers.setScrollTop(newVal.doubleValue());
         });
-        
+
         // Container for line numbers and main text area
         HBox textAreaContainer = new HBox(0);
         textAreaContainer.getChildren().addAll(lineNumbers, mainTextArea);
@@ -225,8 +226,8 @@ public class CompilerGUI extends Application {
         VBox.setVgrow(resultPane, Priority.NEVER);
         VBox.setVgrow(textAreaContainer, Priority.ALWAYS);
 
-        // Set the first TitledPane to take 1/6 of the height
-        resultPane.prefHeightProperty().bind(rightPanel.heightProperty().multiply(0.166));
+        // Set the first TitledPane to take 1/5 of the height for better display
+        resultPane.prefHeightProperty().bind(rightPanel.heightProperty().multiply(0.20));
 
         return rightPanel;
     }
