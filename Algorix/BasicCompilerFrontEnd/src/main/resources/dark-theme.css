@@ -1,86 +1,197 @@
-/* Root styles for dark mode */
+/* Root styles for dark mode and general typography */
 .root {
     -fx-background-color: #2b2b2b;
     -fx-text-fill: #e0e0e0;
+    -fx-font-family: "Segoe UI", "Open Sans", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 14px;
 }
 
-/* Button styles with gradient borders */
+/* --- TITLE STYLES --- */
+.app-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: 700;
+    -fx-text-fill: linear-gradient(to right, #ffffff, #6ba8ff 40%, #2c5d99);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 10, 0.5, 0, 4);
+    -fx-padding: 20 0 15 0;
+    -fx-border-width: 0 0 1px 0;
+    -fx-border-color: #3e3e3e;
+}
+
+/* --- BUTTON STYLES --- */
 .button {
     -fx-background-color: #3c3f41;
     -fx-text-fill: #bbbbbb;
-    -fx-border-color: transparent;
-    -fx-border-width: 2px;
     -fx-background-radius: 5px;
-    -fx-border-radius: 5px;
-    -fx-padding: 8px 16px;
+    -fx-padding: 10px 16px;
     -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 5, 0.2, 0, 2);
+    -fx-border-color: linear-gradient(to bottom right, #4b8ffe, #2c5d99);
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+}
+
+.button.primary-action {
+    -fx-background-color: linear-gradient(to bottom, #4b8ffe, #2c5d99);
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: 700;
+    -fx-font-size: 15px;
+    -fx-padding: 12px 16px;
 }
 
 .button:hover {
     -fx-background-color: #4c5052;
-    -fx-border-color: transparent;
 }
 
 .button:pressed {
     -fx-background-color: #36393b;
-    -fx-border-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 2, 0.1, 0, 1);
 }
 
-/* This is the magic for gradient borders using a background image */
-.button {
-    -fx-background-color: #3c3f41, linear-gradient(to bottom right, #4a9eff, #b347ff);
-    -fx-background-insets: 0, 2;
-    -fx-background-radius: 5px, 3px;
+.button.primary-action:hover {
+    -fx-background-color: linear-gradient(to bottom, #5d9aff, #3c6ea9);
 }
 
-/* TextArea styles */
-.text-area {
+.button:disabled {
+    -fx-opacity: 0.5;
     -fx-background-color: #3c3f41;
-    -fx-text-fill: #e0e0e0;
+    -fx-text-fill: #888888;
+    -fx-border-color: #444444;
+    -fx-effect: none;
+}
+
+/* --- TEXT AREA STYLES (Source Code Area) --- */
+.text-area {
+    -fx-background-color: #252526;
     -fx-border-color: #555555;
     -fx-border-radius: 5px;
     -fx-background-radius: 5px;
+    -fx-border-width: 1px;
 }
 
+/* Source Code Text (Main Area) */
 .text-area .content {
-    -fx-background-color: #3c3f41;
+    -fx-background-color: #1e1e1e;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 13px;
+    /* FIX: Source code text color set to pure white for high contrast */
+    -fx-text-fill: #ffffff;
 }
 
-/* TitledPane styles for the "Result:" section */
-.titled-pane {
-    -fx-background-color: #3c3f41;
-    -fx-text-fill: #e0e0e0;
-}
-
-.titled-pane .title {
-    -fx-background-color: #2b2b2b;
-    -fx-text-fill: #e0e0e0;
+/* --- Line Number Area --- */
+.text-area.line-numbers {
+    -fx-background-color: #252526;
     -fx-border-color: #555555;
-    -fx-border-width: 0 0 1px 0;
+    -fx-border-width: 1px 0 1px 1px;
+    -fx-background-radius: 5px 0 0 5px;
 }
 
-.titled-pane .content {
+.text-area.line-numbers .content {
+    -fx-background-color: #252526;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 13px;
+    /* FIX: Line number text color set to bright gray (easily visible) */
+    -fx-text-fill: #aaaaaa;
+    -fx-padding: 5px 0 0 5px;
+}
+
+/* --- RESULT PANE STYLES --- */
+.result-pane > .title {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #e0e0e0;
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-padding: 10px 16px;
+    -fx-border-width: 0 0 3px 0;
+    -fx-border-color: #2c5d99;
+}
+
+.result-pane > .title .text {
+    -fx-fill: #ffffff;
+    -fx-effect: dropshadow(gaussian, #4b8ffe, 4, 0.4, 0, 1);
+}
+
+.result-pane .content {
     -fx-background-color: #3c3f41;
     -fx-border-color: #555555;
     -fx-border-radius: 0 0 5px 5px;
 }
 
-/* ScrollPane styles (used by TextArea) */
-.scroll-pane {
+/* Compiler Output Text Area (Targeted using the new class) */
+.compiler-result-area .content {
     -fx-background-color: #3c3f41;
-    -fx-border-color: #555555;
+    /* FIX: Compiler output text color set to pure white for ultimate visibility */
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-size: 14px;
 }
 
-.scroll-bar:vertical {
-    -fx-background-color: #3c3f41;
+.result-pane > .title > .arrow-button {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
 }
 
-.scroll-bar:vertical .track {
-    -fx-background-color: #3c3f41;
-    -fx-border-color: #555555;
+/* --- LEFT PANEL STYLES --- */
+.left-panel {
+    -fx-background-color: #ffffff;
+    -fx-padding: 20px 10px;
+    -fx-spacing: 15px;
+}
+/* FORCE WHITE TEXT IN COMPILER OUTPUT */
+.compiler-result-area,
+.compiler-result-area .text,
+.compiler-result-area .content,
+.compiler-result-area .content .text {
+    -fx-text-fill: #ffffff !important;
+    -fx-fill: #ffffff !important;
 }
 
-.scroll-bar:vertical .thumb {
-    -fx-background-color: #555555;
-    -fx-background-radius: 5px;
+/* Keep background and font clean */
+.compiler-result-area .content {
+    -fx-background-color: #3c3f41;
+    -fx-font-family: "Consolas", "Segoe UI", monospace;
+    -fx-font-size: 14px;
+}
+
+.text-area .content,
+.text-area .content .text,
+.text-area .text,
+.text-area .scroll-pane,
+.text-area .scroll-pane .content {
+    -fx-fill: #ffffff !important;
+    -fx-text-fill: #ffffff !important;
+}
+
+/* Extra insurance - target the actual text nodes directly */
+.text-area .text-node {
+    -fx-fill: #ffffff !important;
+}
+
+/* Also make sure caret (cursor) is visible */
+.text-area .caret {
+    -fx-stroke: #ffffff;
+}
+.text-area .content {
+    -fx-background-color: #1e1e1e;
+    -fx-font-family: 'Consolas', 'Fira Code', 'JetBrains Mono', 'Courier New', monospace;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;  /* slightly bolder */
+}
+
+.text-area .text {
+    -fx-fill: #ffffff !important;
+}
+
+.text-area *.text {
+    -fx-fill: #ffffff !important;
+}
+
+/* This is the real killer – targets the actual rendered text nodes */
+.text-area .text-node {
+    -fx-fill: #ffffff !important;
+}
+
+/* Double insurance for any virtualized content */
+.scroll-pane > .viewport > .text {
+    -fx-fill: #ffffff !important;
 }
