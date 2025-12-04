@@ -1,19 +1,27 @@
 package com.compiler.frontend;
 
+import Controller.FileChooser;
+import Model.LexicalAnalysis;
+import Model.SemanticAnalysis;
+import Model.SyntaxAnalysis;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.scene.control.Label;
 
 public class CompilerGUI extends Application {
+    
+    private TextArea mainTextArea;
+    private TextArea resultTextArea;
 
     @Override
     public void start(Stage primaryStage) {
@@ -57,11 +65,96 @@ public class CompilerGUI extends Application {
         leftPanel.setAlignment(Pos.CENTER);
 
         // Create buttons
-        Button openFileBtn = new Button("Open File");
+        Button openFileBtn = new Button("Open File"); 
         Button lexicalBtn = new Button("Lexical Analysis");
+        lexicalBtn.setDisable(true); // disabled initially
         Button syntaxBtn = new Button("Syntax Analysis");
+        syntaxBtn.setDisable(true); // disabled initially
         Button semanticBtn = new Button("Semantic Analysis");
+        semanticBtn.setDisable(true); // disabled initially
         Button clearBtn = new Button("Clear");
+
+        clearBtn.setOnAction(event -> { // Clears the source code and result areas
+            mainTextArea.clear();
+            resultTextArea.clear();
+            lexicalBtn.setDisable(true);
+            syntaxBtn.setDisable(true);
+            semanticBtn.setDisable(true);
+        });
+
+        // Open File button - enables Lexical Analysis
+        openFileBtn.setOnAction(event -> {
+            FileChooser fileChooser = new FileChooser();
+            String fileContent = fileChooser.openFile();
+            
+            if (fileContent != null && !fileContent.isEmpty()) {
+                mainTextArea.setText(fileContent);
+                lexicalBtn.setDisable(false); // Enable Lexical Analysis
+                syntaxBtn.setDisable(true); // Reset Syntax Analysis
+                semanticBtn.setDisable(true); // Reset Semantic Analysis
+                resultTextArea.clear();
+            }
+        });
+        
+        // Lexical Analysis button - enables Syntax Analysis only on PASS
+        lexicalBtn.setOnAction(event -> {
+            String sourceCode = mainTextArea.getText();
+            if (sourceCode == null || sourceCode.trim().isEmpty()) {
+                resultTextArea.setText("Error: Please load a file or enter source code first.");
+                syntaxBtn.setDisable(true);
+            } else {
+                LexicalAnalysis lexical = new LexicalAnalysis();
+                String result = lexical.analyze(sourceCode);
+                resultTextArea.setText(result);
+                
+                // Only enable Syntax Analysis if Lexical Analysis PASSED
+                if (lexical.isPassed()) {
+                   syntaxBtn.setDisable(false); // Enable Syntax Analysis
+                   lexicalBtn.setDisable(true); // Disable Lexical Analysis after pass
+                } else {
+                    syntaxBtn.setDisable(true); // Keep Syntax disabled
+                }
+            }
+        });
+
+        // Syntax Analysis button - enables Semantic Analysis only on PASS
+        syntaxBtn.setOnAction(event -> {
+            String sourceCode = mainTextArea.getText();
+            if (sourceCode == null || sourceCode.trim().isEmpty()) {
+                resultTextArea.setText("Error: Please load a file or enter source code first.");
+                semanticBtn.setDisable(true);
+            } else {
+                SyntaxAnalysis syntax = new SyntaxAnalysis();
+                String result = syntax.analyze(sourceCode);
+                resultTextArea.setText(result);
+                
+                // Only enable Semantic Analysis if Syntax Analysis PASSED
+                if (syntax.isPassed()) {
+                 semanticBtn.setDisable(false); // Enable Semantic Analysis
+                 syntaxBtn.setDisable(true); // Disable Syntax Analysis after pass
+                } else {
+                    semanticBtn.setDisable(true); // Keep Semantic disabled
+                }
+            }
+        });
+
+        // Semantic Analysis button handler
+        semanticBtn.setOnAction(event -> {
+            String sourceCode = mainTextArea.getText();
+            if (sourceCode == null || sourceCode.trim().isEmpty()) {
+                resultTextArea.setText("Error: Please load a file or enter source code first.");
+            } else {
+                SemanticAnalysis semantic = new SemanticAnalysis();
+                String result = semantic.analyze(sourceCode);
+                resultTextArea.setText(result);
+                // Only disable Semantic Analysis if it PASSED
+                if (semantic.isPassed()) {
+                    semanticBtn.setDisable(true); // Disable only on pass
+                }
+                // If it fails, button remains enabled for retry
+            }
+        });
+        
 
         // Make buttons grow to fill the width
         openFileBtn.setMaxWidth(Double.MAX_VALUE);
@@ -86,21 +179,51 @@ public class CompilerGUI extends Application {
         resultPane.setCollapsible(false);
         resultPane.getStyleClass().add("result-pane");   // ← add this line
 
-        TextArea resultTextArea = new TextArea();
+        resultTextArea = new TextArea();
         resultTextArea.setEditable(false);
         resultTextArea.setWrapText(true);
         resultPane.setContent(resultTextArea);
 
-        // Second text area
-        TextArea mainTextArea = new TextArea();
+        // Second text area with line numbers
+        mainTextArea = new TextArea();
         mainTextArea.setWrapText(true);
+        mainTextArea.setStyle("-fx-control-inner-background: #1e1e1e; -fx-font-family: 'Courier New'; -fx-font-size: 12;");
+        
+        // Create line number area
+        TextArea lineNumbers = new TextArea();
+        lineNumbers.setEditable(false);
+        lineNumbers.setWrapText(false);
+        lineNumbers.setPrefWidth(50);
+        lineNumbers.setStyle("-fx-control-inner-background: #252526; -fx-font-family: 'Courier New'; -fx-font-size: 12; -fx-text-fill: #858585;");
+        
+        // Sync line numbers with main text area
+        mainTextArea.textProperty().addListener((obs, oldVal, newVal) -> {
+            int lines = newVal.split("\n", -1).length;
+            StringBuilder lineNumbersText = new StringBuilder();
+            for (int i = 1; i <= lines; i++) {
+                lineNumbersText.append(i).append("\n");
+            }
+            lineNumbers.setText(lineNumbersText.toString());
+        });
+        
+        // Sync scrolling between text areas
+        mainTextArea.setScrollTop(0);
+        lineNumbers.setScrollTop(0);
+        mainTextArea.scrollTopProperty().addListener((obs, oldVal, newVal) -> {
+            lineNumbers.setScrollTop(newVal.doubleValue());
+        });
+        
+        // Container for line numbers and main text area
+        HBox textAreaContainer = new HBox(0);
+        textAreaContainer.getChildren().addAll(lineNumbers, mainTextArea);
+        HBox.setHgrow(mainTextArea, Priority.ALWAYS);
 
         // Add both components to the right panel
-        rightPanel.getChildren().addAll(resultPane, mainTextArea);
+        rightPanel.getChildren().addAll(resultPane, textAreaContainer);
 
         // Set the vertical growth constraints
         VBox.setVgrow(resultPane, Priority.NEVER);
-        VBox.setVgrow(mainTextArea, Priority.ALWAYS);
+        VBox.setVgrow(textAreaContainer, Priority.ALWAYS);
 
         // Set the first TitledPane to take 1/6 of the height
         resultPane.prefHeightProperty().bind(rightPanel.heightProperty().multiply(0.166));

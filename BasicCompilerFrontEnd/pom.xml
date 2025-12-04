@@ -61,7 +61,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                com.example.basiccompilerfrontend/com.example.basiccompilerfrontend.HelloApplication
+                                com.compiler.frontend/com.compiler.frontend.CompilerGUI
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
