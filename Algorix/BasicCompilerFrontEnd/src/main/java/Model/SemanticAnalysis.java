@@ -1,31 +1,47 @@
 package Model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SemanticAnalysis {
 
-    private List<String> errors;
-    private Map<String, String> declaredVariables; // varName -> type
+    private final List<String> errors;
+    private final Map<String, DataType> declaredVariables;
 
-    // Patterns
-    private static final Pattern DECL_LINE_PATTERN = Pattern.compile(
-        "^\\s*(?:(?:public|private|protected|static|final|transient|volatile)\\s+)*" + // optional modifiers
-        "(int|double|float|boolean|char|long|byte|short|String)(?:\\s*\\[\\s*\\])*\\s+(.+);\\s*$"
-    );
+    private enum DataType {
+        INT, DOUBLE, FLOAT, BOOLEAN, CHAR, LONG, BYTE, SHORT, STRING;
 
-    private static final Pattern VAR_NAME_PATTERN = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
-    private static final Pattern INT_LITERAL = Pattern.compile("^[+-]?\\d+$");
-    private static final Pattern FLOAT_LITERAL = Pattern.compile("^[+-]?\\d+\\.\\d+([eE][+-]?\\d+)?$");
-    private static final Pattern SCI_NOTATION = Pattern.compile("^[+-]?\\d+(?:\\.\\d+)?[eE][+-]?\\d+$");
-    private static final Pattern CHAR_LITERAL = Pattern.compile("^'.'$");
-    private static final Pattern STRING_LITERAL = Pattern.compile("^\".*\"$");
-    private static final Pattern BOOLEAN_LITERAL = Pattern.compile("^(true|false)$");
+        private static final Map<String, DataType> MAP = new LinkedHashMap<>();
+        private static final Set<DataType> INTEGRAL = EnumSet.of(INT, LONG, BYTE, SHORT, CHAR);
+        private static final Set<DataType> NUMERIC = EnumSet.of(INT, LONG, BYTE, SHORT, CHAR, DOUBLE, FLOAT);
+
+        static {
+            for (DataType t : values()) MAP.put(t.name().toLowerCase(), t);
+            MAP.put("String", STRING);
+        }
+
+        static DataType from(String s) { return MAP.get(s); }
+        boolean isIntegral() { return INTEGRAL.contains(this); }
+        boolean isNumeric() { return NUMERIC.contains(this); }
+        boolean isFloating() { return this == DOUBLE || this == FLOAT; }
+    }
+
+    private static final Pattern DECL_LINE = Pattern.compile(
+        "^\\s*(?:(?:public|private|protected|static|final|transient|volatile)\\s+)*" +
+        "(int|double|float|boolean|char|long|byte|short|String)(?:\\s*\\[\\s*\\])*\\s+(.+);\\s*$");
+    private static final Pattern VAR_NAME = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
+    private static final Pattern INT_LIT = Pattern.compile("^[+-]?\\d+$");
+    private static final Pattern FLOAT_LIT = Pattern.compile("^[+-]?\\d+\\.\\d+(?:[eE][+-]?\\d+)?$");
+    private static final Pattern SCI_NOT = Pattern.compile("^[+-]?\\d+(?:\\.\\d+)?[eE][+-]?\\d+$");
+    private static final Pattern CHAR_LIT = Pattern.compile("^'.'$");
+    private static final Pattern STR_LIT = Pattern.compile("^\".*\"$");
+    private static final Pattern BOOL_LIT = Pattern.compile("^(?:true|false)$");
 
     public SemanticAnalysis() {
         errors = new ArrayList<>();
@@ -33,465 +49,183 @@ public class SemanticAnalysis {
     }
 
     public String analyze(String sourceCode) {
-        if (sourceCode == null || sourceCode.trim().isEmpty()) {
-            return "✗ FAILED: No source code provided";
-        }
-
         errors.clear();
         declaredVariables.clear();
+        String[] lines = sourceCode.split("\\r?\\n");
 
-        String code = removeComments(sourceCode);
-        List<String> lines = Arrays.asList(code.split("\\r?\\n"));
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+            if (line.isEmpty()) continue;
 
-        int lineNum = 1;
-        for (String rawLine : lines) {
-            String line = rawLine.trim();
-            if (line.isEmpty()) {
-                lineNum++;
-                continue;
+            Matcher m = DECL_LINE.matcher(line);
+            if (m.matches()) {
+                analyzeDeclaration(m.group(1), m.group(2), i + 1);
             }
-
-            // Try match as declaration line
-            Matcher declMatcher = DECL_LINE_PATTERN.matcher(line);
-            if (declMatcher.matches()) {
-                String baseType = declMatcher.group(1);
-                String rest = declMatcher.group(2); // var list, possibly with initializers
-                analyzeDeclarationLine(baseType, rest, lineNum);
-            }
-            lineNum++;
         }
 
         StringBuilder result = new StringBuilder();
         if (errors.isEmpty()) {
             result.append("SEMANTIC ANALYSIS PASSED\n");
         } else {
-            result.append("SEMANTIC ANALYSIS FAILED\n\n");
-            result.append("Errors:\n");
-            for (int i = 0; i < errors.size(); i++) {
-                result.append(errors.get(i)).append("\n");
-            }
+            result.append("SEMANTIC ANALYSIS FAILED\n\nErrors:\n");
+            for (String err : errors) result.append(err).append('\n');
         }
         return result.toString();
     }
 
-    public boolean isPassed() {
-        return errors.isEmpty();
-    }
+    public boolean isPassed() { return errors.isEmpty(); }
 
-    private void analyzeDeclarationLine(String baseType, String varListStr, int lineNum) {
-        // Split by commas at top level (ignore commas in string literals)
-        List<String> varParts = splitTopLevelCommas(varListStr);
+    private void analyzeDeclaration(String typeStr, String varList, int line) {
+        DataType type = DataType.from(typeStr);
+        for (String part : splitCommas(varList)) {
+            part = part.trim();
 
-        for (String part : varParts) {
-            String p = part.trim();
-            if (p.isEmpty()) {
-                errors.add("Line " + lineNum + ": Empty declaration part");
+            int eq = findEquals(part);
+            String name = (eq >= 0 ? part.substring(0, eq) : part).replaceAll("\\[\\s*\\]", "").trim();
+            String init = eq >= 0 ? part.substring(eq + 1).replace(";", "").trim() : null;
+
+            if (declaredVariables.containsKey(name)) {
+                errors.add("Line " + line + ": Variable '" + name + "' already declared");
                 continue;
             }
-
-            String varName;
-            String initializer = null;
-
-            int eqIdx = indexOfTopLevelEquals(p);
-            if (eqIdx >= 0) {
-                varName = p.substring(0, eqIdx).trim();
-                initializer = p.substring(eqIdx + 1).trim();
-            } else {
-                varName = p;
-            }
-
-            // Remove array bracket from variable name if present (e.g., nums[] or nums[ ])
-            varName = varName.replaceAll("\\[\\s*\\]", "").trim();
-
-            if (!VAR_NAME_PATTERN.matcher(varName).matches()) {
-                errors.add("Line " + lineNum + ": Invalid variable name '" + varName + "'");
-                continue;
-            }
-
-            // Duplicate check
-            if (declaredVariables.containsKey(varName)) {
-                errors.add("Line " + lineNum + ": Variable '" + varName + "' already declared");
-                continue;
-            }
-
-            // If initializer present, check compatibility
-            if (initializer != null && !initializer.isEmpty()) {
-                // Basic trim trailing semicolons if any (shouldn't be, since we matched the line ending)
-                if (initializer.endsWith(";")) {
-                    initializer = initializer.substring(0, initializer.length() - 1).trim();
-                }
-
-                String typeErr = checkTypeCompatibility(baseType, initializer, varName, lineNum);
-                if (typeErr != null) {
-                    errors.add(typeErr);
+            if (init != null && !init.isEmpty()) {
+                String err = checkType(type, init, name, line);
+                if (err != null) {
+                    errors.add(err);
                     continue;
                 }
             }
-
-            // If passed, add declared variable
-            declaredVariables.put(varName, baseType);
+            declaredVariables.put(name, type);
         }
     }
 
-    private String checkTypeCompatibility(String declaredType, String expr, String varName, int lineNum) {
-        // Quick inference of expression type
-        // If expression is in parentheses, strip outer parentheses
+    private String checkType(DataType declared, String expr, String var, int line) {
         expr = expr.trim();
-        while (expr.startsWith("(") && expr.endsWith(")")) {
-            // Only strip if parentheses match (simple)
+        while (expr.startsWith("(") && expr.endsWith(")")) 
             expr = expr.substring(1, expr.length() - 1).trim();
+
+        // Single literals
+        if (STR_LIT.matcher(expr).matches())
+            return declared != DataType.STRING ? err(line, "String literal", declared, var) : null;
+        if (CHAR_LIT.matcher(expr).matches())
+            return declared != DataType.CHAR ? err(line, "char literal", declared, var) : null;
+        if (BOOL_LIT.matcher(expr).matches())
+            return declared != DataType.BOOLEAN ? err(line, "boolean literal", declared, var) : null;
+        if (INT_LIT.matcher(expr).matches())
+            return !declared.isNumeric() ? err(line, "integer literal", declared, var) : null;
+        if (FLOAT_LIT.matcher(expr).matches() || SCI_NOT.matcher(expr).matches()) {
+            if (declared.isFloating()) return null;
+            return err(line, declared.isIntegral() ? "floating literal to integral type" : "floating literal", declared, var);
         }
 
-        // If expression is a single literal/token, handle directly
-        if (STRING_LITERAL.matcher(expr).matches()) {
-            if (!declaredType.equals("String")) {
-                return "Line " + lineNum + ": Type mismatch - cannot assign String literal to " + declaredType + " '" + varName + "'";
-            }
-            return null;
-        }
-
-        if (CHAR_LITERAL.matcher(expr).matches()) {
-            if (!declaredType.equals("char")) {
-                return "Line " + lineNum + ": Type mismatch - cannot assign char literal to " + declaredType + " '" + varName + "'";
-            }
-            return null;
-        }
-
-        if (BOOLEAN_LITERAL.matcher(expr).matches()) {
-            if (!declaredType.equals("boolean")) {
-                return "Line " + lineNum + ": Type mismatch - cannot assign boolean literal to " + declaredType + " '" + varName + "'";
-            }
-            return null;
-        }
-
-        if (INT_LITERAL.matcher(expr).matches()) {
-            // integer literal can be assigned to any numeric integral types or wider numeric types
-            if (isNumericType(declaredType)) {
-                return null;
-            } else {
-                return "Line " + lineNum + ": Type mismatch - cannot assign integer literal to " + declaredType + " '" + varName + "'";
-            }
-        }
-
-        if (FLOAT_LITERAL.matcher(expr).matches() || SCI_NOTATION.matcher(expr).matches()) {
-            if (declaredType.equals("double") || declaredType.equals("float")) {
-                return null;
-            } else if (isIntegralType(declaredType)) {
-                return "Line " + lineNum + ": Type mismatch - cannot assign floating literal to integral type " + declaredType + " '" + varName + "'";
-            } else {
-                return "Line " + lineNum + ": Type mismatch - cannot assign floating literal to " + declaredType + " '" + varName + "'";
-            }
-        }
-
-        // Expression contains operators or multiple tokens. Tokenize and check each token
-        List<String> tokens = tokenizeExpression(expr);
-
-        // Track if expression contains a string literal or String variable
-        boolean hasString = false;
-        boolean hasFloat = false;
-        boolean hasDouble = false;
-        boolean hasIntegral = false;
-        boolean hasBoolean = false;
-
-        for (String tok : tokens) {
+        // Complex expressions
+        boolean hasStr = false, hasFloat = false, hasInt = false, hasBool = false;
+        for (String tok : tokenize(expr)) {
             if (tok.isEmpty()) continue;
+            if (STR_LIT.matcher(tok).matches()) { hasStr = true; continue; }
+            if (CHAR_LIT.matcher(tok).matches() || INT_LIT.matcher(tok).matches()) { hasInt = true; continue; }
+            if (BOOL_LIT.matcher(tok).matches()) { hasBool = true; continue; }
+            if (FLOAT_LIT.matcher(tok).matches() || SCI_NOT.matcher(tok).matches()) { hasFloat = true; continue; }
 
-            if (STRING_LITERAL.matcher(tok).matches()) {
-                hasString = true;
-                continue;
+            if (VAR_NAME.matcher(tok).matches()) {
+                DataType ref = declaredVariables.get(tok);
+                if (ref == null) return "Line " + line + ": Undefined variable '" + tok + "' in '" + var + "'";
+                if (ref == DataType.STRING) hasStr = true;
+                else if (ref.isFloating()) hasFloat = true;
+                else if (ref.isIntegral()) hasInt = true;
+                else if (ref == DataType.BOOLEAN) hasBool = true;
             }
-            if (CHAR_LITERAL.matcher(tok).matches()) {
-                // char is integral-like for operations but treat specially
-                hasIntegral = true;
-                continue;
-            }
-            if (BOOLEAN_LITERAL.matcher(tok).matches()) {
-                hasBoolean = true;
-                continue;
-            }
-            if (INT_LITERAL.matcher(tok).matches()) {
-                hasIntegral = true;
-                continue;
-            }
-            if (FLOAT_LITERAL.matcher(tok).matches() || SCI_NOTATION.matcher(tok).matches()) {
-                hasDouble = true;
-                continue;
-            }
-
-            // Otherwise token might be a variable reference
-            if (VAR_NAME_PATTERN.matcher(tok).matches()) {
-                if (!declaredVariables.containsKey(tok)) {
-                    return "Line " + lineNum + ": Undefined variable '" + tok + "' used in assignment to '" + varName + "'";
-                } else {
-                    String refType = declaredVariables.get(tok);
-                    if (refType.equals("String")) hasString = true;
-                    else if (refType.equals("double") || refType.equals("float")) hasDouble = true;
-                    else if (isIntegralType(refType)) hasIntegral = true;
-                    else if (refType.equals("boolean")) hasBoolean = true;
-                }
-            }
-
-            // Other tokens (operators, parentheses) ignore
         }
 
-        // Now determine expression overall type (very conservative)
-        String exprType;
-        if (hasString) exprType = "String";
-        else if (hasDouble) exprType = "double";
-        else if (hasFloat) exprType = "float";
-        else if (hasIntegral) exprType = "int"; // treat all integral as int for compatibility checks
-        else if (hasBoolean) exprType = "boolean";
-        else {
-            // Could not infer; be conservative: allow if declaredType is not String/boolean or char mismatch
-            exprType = "unknown";
-        }
+        DataType exprType = hasStr ? DataType.STRING : hasFloat ? DataType.DOUBLE : hasInt ? DataType.INT : hasBool ? DataType.BOOLEAN : null;
+        
+        if (exprType == DataType.STRING)
+            return declared != DataType.STRING ? exprErr(line, "String", declared, var) : null;
+        if (exprType == DataType.BOOLEAN)
+            return declared != DataType.BOOLEAN ? exprErr(line, "boolean", declared, var) : null;
+        if (exprType == DataType.DOUBLE)
+            return !declared.isFloating() ? exprErr(line, "floating type", declared, var) : null;
+        if (exprType == DataType.INT)
+            return !declared.isNumeric() ? exprErr(line, "integral type", declared, var) : null;
 
-        // Compatibility rules
-        if (exprType.equals("String")) {
-            if (!declaredType.equals("String")) {
-                return "Line " + lineNum + ": Type mismatch - expression evaluates to String but variable '" + varName + "' is " + declaredType;
-            }
-            return null;
-        }
-
-        if (exprType.equals("boolean")) {
-            if (!declaredType.equals("boolean")) {
-                return "Line " + lineNum + ": Type mismatch - expression evaluates to boolean but variable '" + varName + "' is " + declaredType;
-            }
-            return null;
-        }
-
-        if (exprType.equals("double") || exprType.equals("float")) {
-            if (declaredType.equals("double") || declaredType.equals("float")) return null;
-            return "Line " + lineNum + ": Type mismatch - expression evaluates to floating type but variable '" + varName + "' is " + declaredType;
-        }
-
-        if (exprType.equals("int")) {
-            if (isNumericType(declaredType)) return null; // integral -> can fit into wider numeric types (we're being permissive)
-            return "Line " + lineNum + ": Type mismatch - expression evaluates to integral type but variable '" + varName + "' is " + declaredType;
-        }
-
-        // unknown expression type - be permissive but flag if declaredType is String/boolean/char
-        if (declaredType.equals("String") || declaredType.equals("boolean") || declaredType.equals("char")) {
-            return "Line " + lineNum + ": Unable to verify initializer type for '" + varName + "' declared as " + declaredType;
-        }
-
+        if (declared == DataType.STRING || declared == DataType.BOOLEAN || declared == DataType.CHAR)
+            return "Line " + line + ": Unable to verify initializer for '" + var + "' as " + declared;
         return null;
     }
 
-    private boolean isIntegralType(String t) {
-        return Arrays.asList("int", "long", "byte", "short", "char").contains(t);
+    private String err(int line, String lit, DataType type, String var) {
+        return "Line " + line + ": Type mismatch - cannot assign " + lit + " to " + type + " '" + var + "'";
     }
 
-    private boolean isNumericType(String t) {
-        return isIntegralType(t) || t.equals("double") || t.equals("float");
+    private String exprErr(int line, String exprType, DataType type, String var) {
+        return "Line " + line + ": Type mismatch - expression is " + exprType + " but '" + var + "' is " + type;
     }
 
-    // -----------------------
-    // Helpers: split top level commas and equals
-    // -----------------------
-    private List<String> splitTopLevelCommas(String s) {
+    private List<String> splitCommas(String s) {
         List<String> parts = new ArrayList<>();
         StringBuilder cur = new StringBuilder();
-        boolean inString = false;
-        boolean inChar = false;
-        boolean escape = false;
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (escape) {
-                cur.append(c);
-                escape = false;
-                continue;
-            }
-            if (c == '\\') {
-                escape = true;
-                cur.append(c);
-                continue;
-            }
-            if (c == '"' && !inChar) {
-                inString = !inString;
-                cur.append(c);
-                continue;
-            }
-            if (c == '\'' && !inString) {
-                inChar = !inChar;
-                cur.append(c);
-                continue;
-            }
-            if (c == ',' && !inString && !inChar) {
-                parts.add(cur.toString());
-                cur.setLength(0);
-                continue;
-            }
+        boolean inStr = false, inChr = false, esc = false;
+        
+        for (char c : s.toCharArray()) {
+            if (esc) { cur.append(c); esc = false; continue; }
+            if (c == '\\') { esc = true; cur.append(c); continue; }
+            if (c == '"' && !inChr) { inStr = !inStr; cur.append(c); continue; }
+            if (c == '\'' && !inStr) { inChr = !inChr; cur.append(c); continue; }
+            if (c == ',' && !inStr && !inChr) { parts.add(cur.toString()); cur.setLength(0); continue; }
             cur.append(c);
         }
         if (cur.length() > 0) parts.add(cur.toString());
         return parts;
     }
 
-    // find top-level '=' (not inside quotes or parentheses) - returns index or -1
-    private int indexOfTopLevelEquals(String s) {
-        boolean inString = false;
-        boolean inChar = false;
-        boolean escape = false;
+    private int findEquals(String s) {
+        boolean inStr = false, inChr = false, esc = false;
         int paren = 0;
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
-            if (escape) {
-                escape = false;
-                continue;
+            if (esc) { esc = false; continue; }
+            if (c == '\\') { esc = true; continue; }
+            if (c == '"' && !inChr) { inStr = !inStr; continue; }
+            if (c == '\'' && !inStr) { inChr = !inChr; continue; }
+            if (!inStr && !inChr) {
+                if (c == '(') paren++;
+                else if (c == ')' && paren > 0) paren--;
+                else if (c == '=' && paren == 0) return i;
             }
-            if (c == '\\') {
-                escape = true;
-                continue;
-            }
-            if (c == '"' && !inChar) {
-                inString = !inString;
-                continue;
-            }
-            if (c == '\'' && !inString) {
-                inChar = !inChar;
-                continue;
-            }
-            if (inString || inChar) continue;
-            if (c == '(') paren++;
-            else if (c == ')') {
-                if (paren > 0) paren--;
-            } else if (c == '=' && paren == 0) return i;
         }
         return -1;
     }
 
-    // -----------------------
-    // Basic tokenizer for expressions: return identifiers and literals as tokens
-    // -----------------------
-    private List<String> tokenizeExpression(String expr) {
+    private List<String> tokenize(String expr) {
         List<String> tokens = new ArrayList<>();
         StringBuilder cur = new StringBuilder();
-        boolean inString = false;
-        boolean inChar = false;
-        boolean escape = false;
+        boolean inStr = false, inChr = false, esc = false;
 
-        for (int i = 0; i < expr.length(); i++) {
-            char c = expr.charAt(i);
+        for (char c : expr.toCharArray()) {
+            if (esc) { cur.append(c); esc = false; continue; }
+            if (c == '\\') { esc = true; cur.append(c); continue; }
+            if (c == '"' && !inChr) {
+                cur.append(c);
+                inStr = !inStr;
+                if (!inStr) { tokens.add(cur.toString()); cur.setLength(0); }
+                continue;
+            }
+            if (c == '\'' && !inStr) {
+                cur.append(c);
+                inChr = !inChr;
+                if (!inChr) { tokens.add(cur.toString()); cur.setLength(0); }
+                continue;
+            }
+            if (inStr || inChr) { cur.append(c); continue; }
 
-            if (escape) {
+            if (Character.isLetterOrDigit(c) || c == '_' || c == '.' || c == '+' || c == '-') {
                 cur.append(c);
-                escape = false;
-                continue;
-            }
-            if (c == '\\') {
-                escape = true;
-                cur.append(c);
-                continue;
-            }
-            if (c == '"' && !inChar) {
-                cur.append(c);
-                inString = !inString;
-                if (!inString) {
-                    tokens.add(cur.toString());
-                    cur.setLength(0);
-                }
-                continue;
-            }
-            if (c == '\'' && !inString) {
-                cur.append(c);
-                inChar = !inChar;
-                if (!inChar) {
-                    tokens.add(cur.toString());
-                    cur.setLength(0);
-                }
-                continue;
-            }
-            if (inString || inChar) {
-                cur.append(c);
-                continue;
-            }
-
-            // if char is part of identifier/number/underscore/dot/e notation sign
-            if (Character.isLetterOrDigit(c) || c == '_' || c == '.' || c == '+' || c == '-' ) {
-                // but treat + and - as part of numeric literal when appropriate; we keep them for literal detection
-                cur.append(c);
-            } else {
-                if (cur.length() > 0) {
-                    tokens.add(cur.toString());
-                    cur.setLength(0);
-                }
-                // operators and parentheses are skipped
+            } else if (cur.length() > 0) {
+                tokens.add(cur.toString());
+                cur.setLength(0);
             }
         }
         if (cur.length() > 0) tokens.add(cur.toString());
         return tokens;
-    }
-
-    // -----------------------
-    // Robust comment remover: skips comment markers inside string/char literals
-    // -----------------------
-    private String removeComments(String source) {
-        StringBuilder out = new StringBuilder();
-        boolean inString = false;
-        boolean inChar = false;
-        boolean escape = false;
-        int i = 0;
-        while (i < source.length()) {
-            char c = source.charAt(i);
-
-            if (escape) {
-                out.append(c);
-                escape = false;
-                i++;
-                continue;
-            }
-
-            if (c == '\\') {
-                escape = true;
-                out.append(c);
-                i++;
-                continue;
-            }
-
-            if (c == '"' && !inChar) {
-                inString = !inString;
-                out.append(c);
-                i++;
-                continue;
-            }
-            if (c == '\'' && !inString) {
-                inChar = !inChar;
-                out.append(c);
-                i++;
-                continue;
-            }
-
-            if (!inString && !inChar && c == '/' && i + 1 < source.length()) {
-                char n = source.charAt(i + 1);
-                if (n == '/') {
-                    // single-line comment: skip until \n
-                    i += 2;
-                    while (i < source.length() && source.charAt(i) != '\n') i++;
-                    // keep newline if present
-                    if (i < source.length() && source.charAt(i) == '\n') {
-                        out.append('\n');
-                        i++;
-                    }
-                    continue;
-                } else if (n == '*') {
-                    // multi-line comment: skip until */
-                    i += 2;
-                    while (i + 1 < source.length()) {
-                        if (source.charAt(i) == '*' && source.charAt(i + 1) == '/') {
-                            i += 2;
-                            break;
-                        }
-                        i++;
-                    }
-                    continue;
-                }
-            }
-
-            out.append(c);
-            i++;
-        }
-        return out.toString();
     }
 }
