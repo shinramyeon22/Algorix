@@ -1,120 +1,137 @@
-/* Root styles for dark mode */
 .root {
-    -fx-background-color: #2b2b2b;
-    -fx-text-fill: #e0e0e0;
-}
-
-/* Button styles with gradient borders */
-.button {
-    -fx-background-color: #3c3f41;
-    -fx-text-fill: #bbbbbb;
-    -fx-border-color: transparent;
-    -fx-border-width: 2px;
-    -fx-background-radius: 5px;
-    -fx-border-radius: 5px;
-    -fx-padding: 8px 16px;
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #2b2b2b;
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     -fx-font-size: 14px;
 }
 
-.button:hover {
-    -fx-background-color: #4c5052;
-    -fx-border-color: transparent;
-}
-
-.button:pressed {
-    -fx-background-color: #36393b;
-    -fx-border-color: transparent;
+.app-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: 800;
+    -fx-text-fill: linear-gradient(to right, #1e3d73, #4b8ffe);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.3, 0, 3);
+    -fx-padding: 20 0 15 0;
+    -fx-border-width: 0 0 2px 0;
+    -fx-border-color: #4b8ffe;
 }
 
 .button {
-    -fx-background-color: #3c3f41, linear-gradient(to bottom right, #4b8ffe, #2c5d99);
-    -fx-background-insets: 0, 2;
-    -fx-background-radius: 5px, 3px;
+    -fx-background-color: #f5f7fa;
+    -fx-text-fill: #333333;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-padding: 12px 20px;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-border-color: #d0d7e2;
+    -fx-border-width: 1.5px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0.1, 0, 2);
 }
-/* TextArea styles */
+
+.button:hover {
+    -fx-background-color: #e6eaf2;
+    -fx-border-color: #4b8ffe;
+}
+
+.button:pressed {
+    -fx-background-color: #d8e0ee;
+}
+
+.button.primary-action {
+    -fx-background-color: linear-gradient(to bottom, #4b8ffe, #3a78e6);
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-border-color: transparent;
+}
+
+.button.primary-action:hover {
+    -fx-background-color: linear-gradient(to bottom, #5c9aff, #4b8ffe);
+}
+
+.button:disabled {
+    -fx-opacity: 0.6;
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: #999999;
+    -fx-border-color: #cccccc;
+}
+
 .text-area {
-    -fx-background-color: #3c3f41;
-    -fx-text-fill: #e0e0e0;
-    -fx-border-color: #555555;
-    -fx-border-radius: 5px;
-    -fx-background-radius: 5px;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-background-radius: 8px;
 }
 
 .text-area .content {
-    -fx-background-color: #3c3f41;
+    -fx-background-color: #ffffff;
+    -fx-font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 14px;
 }
 
-/* TitledPane styles for the "Result:" section */
-.titled-pane {
-    -fx-background-color: #3c3f41;
-    -fx-text-fill: #e0e0e0;
+.text-area .text {
+    -fx-fill: #1e1e1e !important;
 }
 
-.titled-pane .title {
-    -fx-background-color: #2b2b2b;
-    -fx-text-fill: #e0e0e0;
-    -fx-border-color: #555555;
-    -fx-border-width: 0 0 1px 0;
+.text-area.line-numbers {
+    -fx-background-color: #f8f9fc;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 0 1px 0 0;
 }
 
-.titled-pane .content {
-    -fx-background-color: #3c3f41;
-    -fx-border-color: #555555;
-    -fx-border-radius: 0 0 5px 5px;
+.text-area.line-numbers .content {
+    -fx-background-color: #f8f9fc;
+    -fx-text-fill: #888888;
+    -fx-font-family: 'JetBrains Mono', monospace;
+    -fx-font-size: 13px;
+    -fx-padding: 4px 8px;
 }
 
-/* ScrollPane styles (used by TextArea) */
-.scroll-pane {
-    -fx-background-color: #3c3f41;
-    -fx-border-color: #555555;
-}
-
-.scroll-bar:vertical {
-    -fx-background-color: #3c3f41;
-}
-
-.scroll-bar:vertical .track {
-    -fx-background-color: #3c3f41;
-    -fx-border-color: #555555;
-}
-
-.scroll-bar:vertical .thumb {
-    -fx-background-color: #555555;
-    -fx-background-radius: 5px;
-}
-/* Premium title that matches your blue-steel button gradient */
-.app-title {
-    -fx-font-size: 36px;
-    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    -fx-font-weight: 700;
-    -fx-text-fill: linear-gradient(to right, #6ba8ff, #4b8ffe 40%, #2c5d99);
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 8, 0.4, 0, 3);
-    -fx-padding: 20 0 30 0;
-}
-/* Make the "Result:" title beautiful and consistent with your blue-steel theme */
-.titled-pane > .title {
-    -fx-background-color: #2b2b2b;
-    -fx-text-fill: #e0e0e0;
+.result-pane > .title {
+    -fx-background-color: #4b8ffe;
+    -fx-text-fill: white;
     -fx-font-size: 16px;
-    -fx-font-weight: 600;
+    -fx-font-weight: 700;
     -fx-padding: 12px 16px;
-    -fx-border-width: 0 0 3px 0;
 }
 
-.titled-pane > .title > .arrow-button .arrow {
-    -fx-background-color: #888888;
+.result-pane > .title .text {
+    -fx-fill: white;
 }
 
-.titled-pane > .title:hover {
-    -fx-background-color: #323537;
+.result-pane .content {
+    -fx-background-color: #f8f9fc;
+    -fx-padding: 10px;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px 0 0 0;
 }
 
-/* Optional: subtle glow on the "Result:" text to make it pop */
-.titled-pane > .title .text {
-    -fx-fill: #ffffff;
-    -fx-effect: dropshadow(gaussian, #4b8ffe, 4, 0.4, 0, 1);
+.compiler-result-area .content {
+    -fx-background-color: #f8f9fc;
+    -fx-text-fill: #1e1e1e;
+    -fx-font-family: "Consolas", "Segoe UI", monospace;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
 }
-.result-pane > .title > .arrow-button .arrow {
-    -fx-pref-width: 0;
-    -fx-pref-height: 0;
+
+.text-area *.text,
+.compiler-result-area *.text,
+.text-node,
+.text {
+    -fx-fill: #1e1e1e !important;
+}
+
+.text-area .caret {
+    -fx-stroke: #4b8ffe;
+}
+
+.scroll-bar {
+    -fx-background-color: #f0f0f0;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #bbbbbb;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #999999;
 }
