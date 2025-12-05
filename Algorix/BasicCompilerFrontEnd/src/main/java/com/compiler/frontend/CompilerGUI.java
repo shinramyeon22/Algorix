@@ -57,10 +57,7 @@ public class CompilerGUI extends Application {    private TextArea mainTextArea;
         VBox leftPanel = new VBox(10);
         leftPanel.setPadding(new Insets(10));
         leftPanel.setAlignment(Pos.CENTER);
-        // FIX: Add left-panel class to VBox here for background/padding (if desired)
-        // leftPanel.getStyleClass().add("left-panel"); // (Recommended, but keeping previous functionality for now)
-
-        // Create buttons
+    
         Button openFileBtn = new Button("Open File");
         openFileBtn.getStyleClass().add("primary-action"); // Ensure primary action button is prominent
         Button lexicalBtn = new Button("Lexical Analysis");
@@ -71,13 +68,14 @@ public class CompilerGUI extends Application {    private TextArea mainTextArea;
         lexicalBtn.setDisable(true); // disabled initially
         syntaxBtn.setDisable(true); // disabled initially
         semanticBtn.setDisable(true); // disabled initially
-
+        
         clearBtn.setOnAction(event -> { // Clears the source code and result areas
             mainTextArea.clear();
             resultTextArea.clear();
             lexicalBtn.setDisable(true);
             syntaxBtn.setDisable(true);
             semanticBtn.setDisable(true);
+            openFileBtn.setDisable(false);
         });
 
         // Open File button - enables Lexical Analysis
@@ -87,6 +85,7 @@ public class CompilerGUI extends Application {    private TextArea mainTextArea;
 
             if (fileContent != null && !fileContent.isEmpty()) {
                 mainTextArea.setText(fileContent);
+                openFileBtn.setDisable(true);
                 lexicalBtn.setDisable(false); // Enable Lexical Analysis
                 syntaxBtn.setDisable(true); // Reset Syntax Analysis
                 semanticBtn.setDisable(true); // Reset Semantic Analysis
