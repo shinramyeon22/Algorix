@@ -135,3 +135,75 @@
 .scroll-bar .thumb:hover {
     -fx-background-color: #999999;
 }
+.root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-background-color: #fafafa;
+}
+
+/* Big nice title */
+.app-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #1a3c6e;
+    -fx-padding: 10px;
+}
+
+/* Lively modern buttons */
+.lively-button {
+    -fx-background-radius: 12px;
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 4);
+    -fx-background-insets: 0;
+    -fx-transition: all 0.25s ease;
+}
+
+.lively-button:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 8);
+    -fx-brightness: 1.1;
+}
+
+.lively-button:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Ripple click effect (pure CSS) */
+.lively-button {
+    -fx-background-color: transparent;
+    -fx-border-radius: 12;
+}
+
+.lively-button .ripple {
+    -fx-background-color: rgba(255,255,255,0.5);
+    -fx-background-radius: 50%;
+}
+
+/* Code area */
+.code-text-area, .result-text-area {
+    -fx-font-family: "JetBrains Mono", Consolas, monospace;
+    -fx-font-size: 14px;
+}
+
+.code-text-area {
+    -fx-control-inner-background: #ffffff;
+    -fx-highlight-fill: #4b8ffe44;
+}
+
+.line-numbers {
+    -fx-control-inner-background: #f0f4f8;
+    -fx-text-fill: #888888;
+    -fx-font-size: 13px;
+}
+
+/* Result pane title */
+.result-pane > .title {
+    -fx-background-color: #4b8ffe;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
